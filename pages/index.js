@@ -255,11 +255,11 @@ const Home = () => {
       await tx.wait();
       setLoading(false);
       //   window.alert("Mint successful!")
-      // toast("Mint successful!", {
-      //   hideProgressBar: true,
-      //   autoClose: 2000,
-      //   type: "success",
-      // });
+      toast("Mint successful!", {
+        hideProgressBar: true,
+        autoClose: 2000,
+        type: "success",
+      });
     } catch (error) {
       console.error(error);
       // Here is the error
@@ -290,15 +290,15 @@ const Home = () => {
         value: mintPrice,
       });
       setLoading(true);
-      // setMintPrice(mintPrice);
+ 
       await tx.wait();
       setLoading(false);
-      //   window.alert("Mint successful!")
-      // toast("Mint successful!", {
-      //   hideProgressBar: true,
-      //   autoClose: 2000,
-      //   type: "success",
-      // });
+  
+      toast("Mint successful!", {
+        hideProgressBar: true,
+        autoClose: 2000,
+        type: "success",
+      });
     } catch (error) {
       console.error(error);
       //Here is the error

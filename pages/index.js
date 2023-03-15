@@ -213,36 +213,30 @@ const Home = () => {
   };
 
   useEffect(() => {
-    
-  if(quantity){
-    if(whitelistMintStage){
-      let mintPrice = Number("0.0035") * (quantity - 1);
+    if (quantity) {
+      if (whitelistMintStage) {
+        let mintPrice = Number("0.0035") * (quantity - 1);
 
-      setMintPrice(mintPrice)
-    }else {
-      let mintPrice = Number("0.0035") * (quantity);
+        setMintPrice(mintPrice);
+      } else {
+        let mintPrice = Number("0.0035") * quantity;
 
-      setMintPrice(mintPrice)
+        setMintPrice(mintPrice);
+      }
     }
-
-  }
-  }, [quantity])
+  }, [quantity]);
   useEffect(() => {
-    
+    if (whitelistMintStage) {
+      let mintPrice = Number("0.0035") * 0;
 
-    if(whitelistMintStage){
-      let mintPrice = Number("0.0035") * (0);
+      setMintPrice(mintPrice);
+    } else {
+      let mintPrice = Number("0.0035") * quantity;
 
-      setMintPrice(mintPrice)
-    }else {
-      let mintPrice = Number("0.0035") * (quantity);
-
-      setMintPrice(mintPrice)
+      setMintPrice(mintPrice);
     }
+  }, []);
 
-  
-  }, [])
-  
   const callWhitelistMint = async () => {
     try {
       const signer = await getProviderOrSigner(true);
@@ -251,27 +245,21 @@ const Home = () => {
         MIRA_CONTRACT_ABI,
         signer
       );
-      let mintPriceWl;
-      if (quantity > 1) {
-        mintPriceWl = utils.parseEther("0.0035").mul(quantity);
-      } else {
-        mintPriceWl = utils.parseEther("0").mul(quantity);
-      }
-      const mintPrice = utils.parseEther("0").mul(quantity);
 
-console.log("ehfhwejfjewjfjwef", mintPriceWl)
-      const tx = await miraContract.miralist_Mint(quantity, merkleProof, {
-        value: mintPrice,
-      });
+      // mintPriceWl = utils.parseEther("0").mul(quantity);
+
+      console.log("qty", quantity);
+
+      const tx = await miraContract.miralist_Mint(quantity, merkleProof);
       setLoading(true);
       await tx.wait();
       setLoading(false);
       //   window.alert("Mint successful!")
-      toast("Mint successful!", {
-        hideProgressBar: true,
-        autoClose: 2000,
-        type: "success",
-      });
+      // toast("Mint successful!", {
+      //   hideProgressBar: true,
+      //   autoClose: 2000,
+      //   type: "success",
+      // });
     } catch (error) {
       console.error(error);
       // Here is the error
@@ -294,21 +282,23 @@ console.log("ehfhwejfjewjfjwef", mintPriceWl)
       );
 
       const mintPrice = utils.parseEther("0.0035").mul(quantity);
-console.log("ehfhwejfjewjfjwef", mintPrice)
+      console.log("qty", quantity, mintPrice, merkleProof);
+      console.log("mintPriceWl", mintPrice);
+      console.log("merkleProof", merkleProof);
 
       const tx = await miraContract.publicMint(quantity, {
         value: mintPrice,
       });
       setLoading(true);
-      setMintPrice(mintPrice);
+      // setMintPrice(mintPrice);
       await tx.wait();
       setLoading(false);
       //   window.alert("Mint successful!")
-      toast("Mint successful!", {
-        hideProgressBar: true,
-        autoClose: 2000,
-        type: "success",
-      });
+      // toast("Mint successful!", {
+      //   hideProgressBar: true,
+      //   autoClose: 2000,
+      //   type: "success",
+      // });
     } catch (error) {
       console.error(error);
       //Here is the error
@@ -426,9 +416,7 @@ console.log("ehfhwejfjewjfjwef", mintPrice)
                   +
                 </Grid>
               </Grid>
-              <span style={{ fontSize: "14px" }}>
-              {mintPrice} Eth + gas
-              </span>
+              <span style={{ fontSize: "14px" }}>{mintPrice} Eth + gas</span>
             </Grid>
             <Grid xs={12} style={{ width: "90%" }}>
               <p style={{ fontSize: "14px" }}>
@@ -634,9 +622,7 @@ console.log("ehfhwejfjewjfjwef", mintPrice)
                 +
               </Grid>
             </Grid>
-            <span style={{ fontSize: "14px" }}>
-            {mintPrice} ETH + gas
-            </span>
+            <span style={{ fontSize: "14px" }}>{mintPrice} ETH + gas</span>
           </Grid>
           {}
           <Grid xs={12} style={{ width: "90%" }}>

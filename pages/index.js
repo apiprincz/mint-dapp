@@ -22,11 +22,12 @@ import WalletConnectProvider from "@walletconnect/web3-provider";
 
 const Home = () => {
   const one = BigNumber.from(1);
+  const zero = BigNumber.from(0);
   const [walletConnected, setWalletConnected] = useState(false);
   const web3ModalRef = useRef();
   const [quantity, setQuantity] = useState(one);
-  const [whitelistMintStage, setWhitelistMintStage] = useState(false);
-  const [publicMintStage, setPublicMintStage] = useState(false);
+  const [mintStatus, setMintStatus] = useState(false);
+
   const [mintStage, setMintStage] = useState(false);
 
   // const [merkleRoot, setMerkleRoot] = useState(rootHash)
@@ -41,7 +42,7 @@ const Home = () => {
   const [signature, setSignature] = useState("");
   const [library, setLibrary] = useState("");
   const [network, setNetwork] = useState("");
-  const [mintPrice, setMintPrice] = useState("");
+  const [mintPrice, setMintPrice] = useState("0");
 
   const walletConnectOptions = {
     package: WalletConnectProvider, // required
@@ -187,18 +188,10 @@ const Home = () => {
   };
 
   const handleIncrement = () => {
-    if (whitelistMintStage) {
-      if (quantity >= 2) {
-        setQuantity(quantity);
-      } else {
-        setQuantity(quantity.add(1));
-      }
+    if (quantity >= 5) {
+      setQuantity(quantity);
     } else {
-      if (quantity >= 5) {
-        setQuantity(quantity);
-      } else {
-        setQuantity(quantity.add(1));
-      }
+      setQuantity(quantity.add(1));
     }
 
     if (quantity < 1) {
@@ -214,30 +207,70 @@ const Home = () => {
 
   useEffect(() => {
     if (quantity) {
-      if (whitelistMintStage) {
-        let mintPrice = Number("0.0035") * (quantity - 1);
+      if (mintStatus) {
+        if (merkleProof.length > 0) {
+          if (mintedForFree) {
+            let mintPrice = utils.parseEther("0.0035").mul(quantity);
+            console.log("wl", true, mintPrice);
 
-        setMintPrice(mintPrice);
-      } else {
-        let mintPrice = Number("0.0035") * quantity;
+            setMintPrice(mintPrice.toString());
+          } else {
+            let mintPrice = utils.parseEther("0.0035").mul(quantity - 1);
 
-        setMintPrice(mintPrice);
+            console.log("wl", false, mintPrice);
+
+            setMintPrice(mintPrice.toString());
+          }
+        } else {
+          let mintPrice = utils.parseEther("0.0035").mul(quantity);
+
+          setMintPrice(mintPrice.toString());
+        }
       }
     }
   }, [quantity]);
-  useEffect(() => {
-    if (whitelistMintStage) {
-      let mintPrice = Number("0.0035") * 0;
 
-      setMintPrice(mintPrice);
-    } else {
-      let mintPrice = Number("0.0035") * quantity;
+  const hasClaimedWhitelist = async () => {
+    try {
+      let wlState = false;
+      const provider = await getProviderOrSigner();
+      const miraContract = new Contract(
+        MIRA_CONTRACT_ADDRESS,
+        MIRA_CONTRACT_ABI,
+        provider
+      );
+      await miraContract.hasClaimedWhitelist(userAddress).then((res) => {
+        wlState = res;
+        if (res) {
+          let mintPrice = utils.parseEther("0.0035");
+          setMintedForFree(res);
 
-      setMintPrice(mintPrice);
+          setMintPrice(mintPrice.toString());
+        } else {
+          setMintedForFree(res);
+        }
+        console.log("res", res);
+      });
+
+      return wlState;
+    } catch (error) {
+      console.error(error);
     }
-  }, []);
+  };
 
-  const callWhitelistMint = async () => {
+  useEffect(() => {
+    if (userAddress) {
+      if (merkleProof.length > 0) {
+        const wl = hasClaimedWhitelist();
+      } else {
+        let mintPrice = utils.parseEther("0.0035");
+
+        setMintPrice(mintPrice.toString());
+      }
+    }
+  }, [merkleProof, mintedForFree]);
+
+  const callMint = async () => {
     try {
       const signer = await getProviderOrSigner(true);
       const miraContract = new Contract(
@@ -246,15 +279,16 @@ const Home = () => {
         signer
       );
 
-      // mintPriceWl = utils.parseEther("0").mul(quantity);
-
       console.log("qty", quantity);
 
-      const tx = await miraContract.miralist_Mint(quantity, merkleProof);
+      const tx = await miraContract.mint(quantity, merkleProof, {
+        value: mintPrice,
+      });
       setLoading(true);
       await tx.wait();
       setLoading(false);
-      //   window.alert("Mint successful!")
+      const wl = hasClaimedWhitelist();
+
       toast("Mint successful!", {
         hideProgressBar: true,
         autoClose: 2000,
@@ -263,45 +297,6 @@ const Home = () => {
     } catch (error) {
       console.error(error);
       // Here is the error
-      //   window.alert(error)
-      toast("unable to mint", {
-        hideProgressBar: true,
-        autoClose: 2000,
-        type: "error",
-      });
-    }
-  };
-
-  const callPublicMint = async () => {
-    try {
-      const signer = await getProviderOrSigner(true);
-      const miraContract = new Contract(
-        MIRA_CONTRACT_ADDRESS,
-        MIRA_CONTRACT_ABI,
-        signer
-      );
-
-      const mintPrice = utils.parseEther("0.0035").mul(quantity);
-      console.log("qty", quantity, mintPrice, merkleProof);
-      console.log("mintPriceWl", mintPrice);
-      console.log("merkleProof", merkleProof);
-
-      const tx = await miraContract.publicMint(quantity, {
-        value: mintPrice,
-      });
-      setLoading(true);
- 
-      await tx.wait();
-      setLoading(false);
-  
-      toast("Mint successful!", {
-        hideProgressBar: true,
-        autoClose: 2000,
-        type: "success",
-      });
-    } catch (error) {
-      console.error(error);
-      //Here is the error
       //   window.alert(error)
       toast("unable to mint", {
         hideProgressBar: true,
@@ -321,17 +316,14 @@ const Home = () => {
       );
       let mintStage = await miraContract.mintStatus();
       if (mintStage === 1) {
-        setWhitelistMintStage(true);
+        setMintStatus(true);
       }
       console.log("mintStage", mintStage);
-      // const _publicMintStage = await miraContract.mintPhase();
-      if (mintStage === 2) {
-        setPublicMintStage(true);
-      }
     } catch (error) {
       console.error(error);
     }
   };
+
   const getTotalAndMaxSupply = async () => {
     try {
       const provider = await getProviderOrSigner();
@@ -351,300 +343,97 @@ const Home = () => {
   };
 
   function renderMint() {
-    if (whitelistMintStage) {
-      if (merkleProof.length > 0) {
-        return (
-          <Grid
-            container
-            justifyContent="space-between"
-            style={{ minHeight: "65vh" }}
-            alignItems="center"
-            flexDirection="column"
-          >
-            <Grid xs={12}>
-              <Grid container justifyContent="center" alignItems="center">
-                <Grid
-                  container
-                  alignItems="center"
-                  justifyContent="center"
-                  style={{
-                    borderRadius: "50%",
-                    background: "transparent",
-                    textAlign: "center",
-                    border: "1px solid black",
-                    width: "30px",
-                    height: "30px",
-                    fontSize: "15px",
-                  }}
-                  onClick={handleDecrement}
-                >
-                  -
-                </Grid>
-                <Grid>
-                  <input
-                    type="number"
-                    value={quantity}
-                    disabled="disabled"
-                    style={{
-                      background: "none",
-                      height: "100px",
-                      border: "none",
-                      color: "black",
-                      fontSize: "60px",
-                      width: "100px",
-                      textAlign: "center",
-                    }}
-                  />
-                </Grid>
-
-                <Grid
-                  container
-                  alignItems="center"
-                  justifyContent="center"
-                  style={{
-                    borderRadius: "50%",
-                    background: "transparent",
-                    textAlign: "center",
-                    border: "1px solid black",
-                    width: "30px",
-                    height: "30px",
-
-                    fontSize: "15px",
-                  }}
-                  onClick={handleIncrement}
-                >
-                  +
-                </Grid>
-              </Grid>
-              <span style={{ fontSize: "14px" }}>{mintPrice} Eth + gas</span>
-            </Grid>
-            <Grid xs={12} style={{ width: "90%" }}>
-              <p style={{ fontSize: "14px" }}>
-                {totalAmountMinted + 140} / {maxSupply} minted
-              </p>
-              <Grid xs={12}>
-                <Progress
-                  percent={Math.floor(
-                    ((totalAmountMinted + 140) * 100) / maxSupply
-                  )}
-                />
-              </Grid>
-            </Grid>
-            <Button
-              variant="outlined"
-              onClick={callWhitelistMint}
-              disabled={totalAmountMinted + 140 === maxSupply}
+    return (
+      <Grid
+        container
+        justifyContent="space-between"
+        style={{ minHeight: "65vh" }}
+        alignItems="center"
+        flexDirection="column"
+      >
+        <Grid xs={12}>
+          <Grid container justifyContent="center" alignItems="center">
+            <Grid
+              container
+              alignItems="center"
+              justifyContent="center"
+              style={{
+                borderRadius: "50%",
+                background: "transparent",
+                textAlign: "center",
+                border: "1px solid black",
+                width: "30px",
+                height: "30px",
+                fontSize: "15px",
+              }}
+              onClick={handleDecrement}
             >
-              {totalAmountMinted + 140 === maxSupply ? "Sold Out" : "Mint"}
-            </Button>
-
-            <div style={{ fontSize: "16px" }}>
-              Congrats! Your Wallet
-              <br />
-              <span
-                style={{
-                  fontSize: "14px",
-                  wordBreak: "break-all",
-                  background: "#8080804f",
-                }}
-              >
-                {userAddress}
-              </span>
-              <br />
-              Is Whitelisted
-            </div>
-            <span style={{ color: "green", fontSize: "30px" }}>
-              WHITELIST MINT IS LIVE
-            </span>
-          </Grid>
-        );
-      } else {
-        return (
-          <Grid
-            container
-            justifyContent="space-between"
-            style={{ minHeight: "65vh" }}
-            alignItems="center"
-            flexDirection="column"
-          >
-            <Grid container justifyContent="center" alignItems="center">
-              <Grid
-                container
-                alignItems="center"
-                justifyContent="center"
-                style={{
-                  borderRadius: "50%",
-                  background: "transparent",
-                  textAlign: "center",
-                  border: "1px solid black",
-                  width: "30px",
-                  height: "30px",
-                  fontSize: "15px",
-                }}
-                onClick={handleDecrement}
-              >
-                -
-              </Grid>
-              <Grid>
-                <input
-                  type="number"
-                  value={quantity}
-                  disabled="disabled"
-                  style={{
-                    background: "none",
-                    height: "100px",
-                    border: "none",
-                    color: "black",
-                    fontSize: "60px",
-                    width: "100px",
-                    textAlign: "center",
-                  }}
-                />
-              </Grid>
-
-              <Grid
-                container
-                alignItems="center"
-                justifyContent="center"
-                style={{
-                  borderRadius: "50%",
-                  background: "transparent",
-                  textAlign: "center",
-                  border: "1px solid black",
-                  width: "30px",
-                  height: "30px",
-
-                  fontSize: "15px",
-                }}
-                onClick={handleIncrement}
-              >
-                +
-              </Grid>
+              -
             </Grid>
-            {}
-            <Grid xs={12} style={{ width: "90%" }}>
-              <p style={{ fontSize: "14px" }}>
-                {totalAmountMinted + 140} / {maxSupply} minted
-              </p>
-              <Grid xs={12}>
-                <Progress
-                  percent={Math.floor(
-                    ((totalAmountMinted + 140) * 100) / maxSupply
-                  )}
-                />
-              </Grid>
-            </Grid>
-            <span style={{ fontSize: "15px" }}>Wait For Public</span>
-            <div style={{ fontSize: "16px" }}>
-              Sorry! Your Wallet
-              <br />
-              <span
+            <Grid>
+              <input
+                type="number"
+                value={quantity}
+                disabled="disabled"
                 style={{
-                  fontSize: "14px",
-                  wordBreak: "break-all",
-                  background: "#8080804f",
-                }}
-              >
-                {userAddress}
-              </span>
-              <br />
-              Is not Whitelisted
-            </div>
-            <span style={{ color: "green", fontSize: "30px" }}>
-              WHITELIST MINT IS LIVE
-            </span>
-          </Grid>
-        );
-      }
-    }
-
-    if (publicMintStage) {
-      return (
-        <Grid
-          container
-          justifyContent="space-between"
-          style={{ minHeight: "65vh" }}
-          alignItems="center"
-          flexDirection="column"
-        >
-          <Grid xs={12}>
-            <Grid container justifyContent="center" alignItems="center">
-              <Grid
-                container
-                alignItems="center"
-                justifyContent="center"
-                style={{
-                  borderRadius: "50%",
-                  background: "transparent",
+                  background: "none",
+                  height: "100px",
+                  border: "none",
+                  color: "black",
+                  fontSize: "60px",
+                  width: "100px",
                   textAlign: "center",
-                  border: "1px solid black",
-                  width: "30px",
-                  height: "30px",
-                  fontSize: "15px",
                 }}
-                onClick={handleDecrement}
-              >
-                -
-              </Grid>
-              <Grid>
-                <input
-                  type="number"
-                  value={quantity}
-                  disabled="disabled"
-                  style={{
-                    background: "none",
-                    height: "100px",
-                    border: "none",
-                    color: "black",
-                    fontSize: "60px",
-                    width: "100px",
-                    textAlign: "center",
-                  }}
-                />
-              </Grid>
-
-              <Grid
-                container
-                alignItems="center"
-                justifyContent="center"
-                style={{
-                  borderRadius: "50%",
-                  background: "transparent",
-                  textAlign: "center",
-                  border: "1px solid black",
-                  width: "30px",
-                  height: "30px",
-
-                  fontSize: "15px",
-                }}
-                onClick={handleIncrement}
-              >
-                +
-              </Grid>
-            </Grid>
-            <span style={{ fontSize: "14px" }}>{mintPrice} ETH + gas</span>
-          </Grid>
-          {}
-          <Grid xs={12} style={{ width: "90%" }}>
-            <p style={{ fontSize: "14px" }}>
-              {totalAmountMinted + 140} / {maxSupply} minted
-            </p>
-            <Grid xs={12}>
-              <Progress
-                percent={Math.floor(
-                  ((totalAmountMinted + 140) * 100) / maxSupply
-                )}
               />
             </Grid>
+
+            <Grid
+              container
+              alignItems="center"
+              justifyContent="center"
+              style={{
+                borderRadius: "50%",
+                background: "transparent",
+                textAlign: "center",
+                border: "1px solid black",
+                width: "30px",
+                height: "30px",
+
+                fontSize: "15px",
+              }}
+              onClick={handleIncrement}
+            >
+              +
+            </Grid>
           </Grid>
-          <Button
-            variant="outlined"
-            onClick={callPublicMint}
-            disabled={totalAmountMinted + 140 === maxSupply}
-          >
-            {totalAmountMinted + 140 === maxSupply ? "Sold Out" : "Mint"}
-          </Button>
-          {/* <div style={{ fontSize: "16px" }}>
+          <span style={{ fontSize: "14px" }}>
+            {utils.formatEther(mintPrice)} Eth + gas
+          </span>
+        </Grid>
+        <Grid xs={12} style={{ width: "90%" }}>
+          <p style={{ fontSize: "14px" }}>
+            {totalAmountMinted + 140} / {maxSupply} minted
+          </p>
+          <Grid xs={12}>
+            <Progress
+              percent={Math.floor(
+                ((totalAmountMinted + 140) * 100) / maxSupply
+              )}
+            />
+          </Grid>
+        </Grid>
+        <Button
+          variant="outlined"
+          onClick={callMint}
+          disabled={totalAmountMinted + 140 === maxSupply}
+        >
+          {totalAmountMinted + 140 === maxSupply ? "Sold Out" : "Mint"}
+        </Button>
+
+        <div style={{ fontSize: "16px" }}>
+          {merkleProof.length > 0 ? (
+            <>
+              {" "}
               Congrats! Your Wallet
               <br />
               <span
@@ -658,20 +447,19 @@ const Home = () => {
               </span>
               <br />
               Is Whitelisted
-            </div> */}
-          <span style={{ color: "green", fontSize: "30px" }}>
-            PUBLIC MINT IS LIVE
-          </span>
-        </Grid>
-      );
-    }
+            </>
+          ) : (
+            <> {userAddress}</>
+          )}
+        </div>
+        <span style={{ color: "green", fontSize: "30px" }}>MINT IS LIVE</span>
+      </Grid>
+    );
   }
 
   function renderMintStatus() {
-    if (whitelistMintStage) {
-      return <span className={styles.stage}>WHITELIST MINT IS LIVE</span>;
-    } else if (publicMintStage) {
-      return <span className={styles.stage}>PUBLIC MINT IS LIVE</span>;
+    if (mintStatus) {
+      return <span className={styles.stage}> MINT IS LIVE</span>;
     } else {
       <span className={styles.stage}>
         <Countdown />
@@ -695,7 +483,7 @@ const Home = () => {
               </Button>
             ) : (
               <>
-                {!whitelistMintStage && !publicMintStage ? (
+                {!mintStatus ? (
                   <Grid>Mint Is Not Live Yet</Grid>
                 ) : (
                   <Grid>
@@ -807,16 +595,6 @@ const Home = () => {
           </Grid>
           <Grid container justifyContent="flex-end">
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-            {/* <Grid className="socials">
-              <Link href="/">
-                <img src='./opensea.png'/>
-              </Link>
-            </Grid>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-            <Grid className="socials">
-              <Link href="/">
-                <TwitterIcon />
-              </Link>
-            </Grid> */}
           </Grid>
         </Grid>
         <Grid xs={12} sm={9} md={6} style={{ margin: "0 auto" }}>
@@ -832,7 +610,7 @@ const Home = () => {
             p={2}
           >
             <Grid style={{ minHeight: "60vh" }}>
-              {!whitelistMintStage && !publicMintStage ? (
+              {!mintStatus ? (
                 <Grid
                   style={{
                     minHeight: "60vh",
@@ -844,10 +622,6 @@ const Home = () => {
                   alignItems="center"
                   justifyContent="center"
                 >
-                  {/* {renderMint()} */}
-                  {/* {totalAmountMinted}
-                  {maxSupply}
-                  {whitelistMintStage ? 'true' : 'false'} */}
                   {loading ? (
                     <Grid>
                       {walletConnected ? (

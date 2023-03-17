@@ -1,4 +1,4 @@
-const MIRA_CONTRACT_ADDRESS = "0xeA73aBd190eeD1128fc090D958CD9Eb24b62D28C";
+const MIRA_CONTRACT_ADDRESS = "0xfa73b9D0Ab17BBfd9B70d16821F537C3B582a1f6";
 const MIRA_CONTRACT_ABI = [
   { inputs: [], stateMutability: "nonpayable", type: "constructor" },
   { inputs: [], name: "ApprovalCallerNotOwnerNorApproved", type: "error" },
@@ -170,6 +170,13 @@ const MIRA_CONTRACT_ABI = [
   },
   {
     inputs: [],
+    name: "maxFreeMint",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
     name: "maxPerWallet",
     outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
     stateMutability: "view",
@@ -190,22 +197,22 @@ const MIRA_CONTRACT_ABI = [
     type: "function",
   },
   {
+    inputs: [
+      { internalType: "uint256", name: "_quantity", type: "uint256" },
+      { internalType: "bytes32[]", name: "proof", type: "bytes32[]" },
+    ],
+    name: "mint",
+    outputs: [],
+    stateMutability: "payable",
+    type: "function",
+  },
+  {
     inputs: [],
     name: "mintStatus",
     outputs: [
       { internalType: "enum MiraOnChain.MintStatus", name: "", type: "uint8" },
     ],
     stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      { internalType: "uint256", name: "_quantity", type: "uint256" },
-      { internalType: "bytes32[]", name: "proof", type: "bytes32[]" },
-    ],
-    name: "miralist_Mint",
-    outputs: [],
-    stateMutability: "nonpayable",
     type: "function",
   },
   {
@@ -234,13 +241,6 @@ const MIRA_CONTRACT_ABI = [
     name: "price",
     outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
     stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [{ internalType: "uint256", name: "_quantity", type: "uint256" }],
-    name: "publicMint",
-    outputs: [],
-    stateMutability: "payable",
     type: "function",
   },
   {
@@ -279,6 +279,15 @@ const MIRA_CONTRACT_ABI = [
       { internalType: "bool", name: "approved", type: "bool" },
     ],
     name: "setApprovalForAll",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "uint256", name: "_maxFreeMint", type: "uint256" },
+    ],
+    name: "setMaxFreeMint",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
@@ -345,6 +354,13 @@ const MIRA_CONTRACT_ABI = [
     inputs: [{ internalType: "uint256", name: "_tokenId", type: "uint256" }],
     name: "tokenURI",
     outputs: [{ internalType: "string", name: "", type: "string" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "totalFreeMinted",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
     stateMutability: "view",
     type: "function",
   },

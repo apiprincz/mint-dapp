@@ -19,6 +19,7 @@ import CallMadeIcon from "@mui/icons-material/CallMade";
 import Web3 from "web3";
 
 import WalletConnectProvider from "@walletconnect/web3-provider";
+import { WHITELIST_ADDRESS } from "@/whitelist/whitelist_Address";
 
 const Home = () => {
   const one = BigNumber.from(1);
@@ -39,6 +40,7 @@ const Home = () => {
   const [totalAmountMinted, setTotalAmountMinted] = useState(0);
   const [maxSupply, setMaxSupply] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [isWl, setIsWl] = useState(false);
   const [signature, setSignature] = useState("");
   const [library, setLibrary] = useState("");
   const [network, setNetwork] = useState("");
@@ -121,7 +123,7 @@ const Home = () => {
     setNetwork(chainId);
 
     // if (chainId != 5) {
-    
+
     //   toast("Incorrect network, please connect to goerli", {
     //     hideProgressBar: true,
     //     autoClose: 2000,
@@ -135,7 +137,6 @@ const Home = () => {
         autoClose: 2000,
         type: "error",
       });
-
     }
 
     if (isSigner) {
@@ -342,6 +343,14 @@ const Home = () => {
     }
   };
 
+  useEffect(() => {
+    if (userAddress) {
+      const wlAddress = WHITELIST_ADDRESS.includes(userAddress);
+      setIsWl(wlAddress);
+      console.log("wlAddress", wlAddress);
+    }
+  }, [userAddress]);
+
   function renderMint() {
     return (
       <Grid
@@ -416,9 +425,7 @@ const Home = () => {
           </p>
           <Grid xs={12}>
             <Progress
-              percent={Math.floor(
-                ((totalAmountMinted + 0) * 100) / maxSupply
-              )}
+              percent={Math.floor(((totalAmountMinted + 0) * 100) / maxSupply)}
             />
           </Grid>
         </Grid>
@@ -427,7 +434,9 @@ const Home = () => {
           onClick={callMint}
           disabled={totalAmountMinted + 0 === maxSupply}
         >
-          {totalAmountMinted + 0 === maxSupply ? "Sold Out" : "Mint"}
+          <span style={{ color: "white" }}>
+            {totalAmountMinted + 0 === maxSupply ? "Sold Out" : "Mint"}
+          </span>
         </Button>
 
         <div style={{ fontSize: "16px" }}>
@@ -560,7 +569,9 @@ const Home = () => {
                       switch to ETH Network
                     </Button>
                   ) : (
-                    <Button onClick={signMessage}>Sign Message</Button>
+                    <Button style={{ color: "skyblue" }} onClick={signMessage}>
+                      Sign Message
+                    </Button>
                   )}
                 </>
               )}
@@ -639,7 +650,9 @@ const Home = () => {
                                 </Button>
                               ) : (
                                 <Button onClick={signMessage}>
-                                  Sign Message
+                                  <span style={{ color: "white" }}>
+                                    Sign Message
+                                  </span>
                                 </Button>
                               )}
                             </>
@@ -651,9 +664,18 @@ const Home = () => {
                     </Grid>
                   ) : (
                     <>
-                      {totalAmountMinted + 0 >= maxSupply
-                        ? renderSoldOut()
-                        : "MINT HAS NOT STARTED"}
+                      {totalAmountMinted + 0 >= maxSupply ? (
+                        renderSoldOut()
+                      ) : (
+                        <Grid>
+                          MINT HAS NOT STARTED <br />
+                          {isWl ? (
+                            <>Your Address is Whitelisted </>
+                          ) : (
+                            <>Your address is not on the whitelist</>
+                          )}
+                        </Grid>
+                      )}
                     </>
                   )}
                 </Grid>

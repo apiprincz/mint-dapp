@@ -497,9 +497,9 @@ const Home = () => {
                 ) : (
                   <Grid>
                     Sold Out!<br></br>
-                    <Link href="/" className="opensea">
+                    <Link href="https://opensea.io/collection/mira-on-chain" className="opensea">
                       {" "}
-                      Get Mira onChain on <a href="">Opensea</a>{" "}
+                      Get Mira onChain on <a href="https://opensea.io/collection/mira-on-chain">Opensea</a>{" "}
                       <CallMadeIcon />
                     </Link>
                   </Grid>
@@ -718,9 +718,14 @@ const Home = () => {
           py={2}
           className="socials"
         >
+          <a href="https://opensea.io/collection/mira-on-chain">
+            <img style={{width:'22px'}} src="./opensea.png"/>
+            </a>&nbsp;
+      
           <Link href="https://twitter.com/Mira_Onchain">
             <TwitterIcon />
           </Link>
+
         </Grid>
       </Grid>
     </Grid>

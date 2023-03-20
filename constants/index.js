@@ -1,4 +1,4 @@
-const MIRA_CONTRACT_ADDRESS = "0xfa73b9D0Ab17BBfd9B70d16821F537C3B582a1f6";
+const MIRA_CONTRACT_ADDRESS = "0xf5E84CCc3FCf5d7EBcD3283fe507874fa0CFAd88";
 const MIRA_CONTRACT_ABI = [
   { inputs: [], stateMutability: "nonpayable", type: "constructor" },
   { inputs: [], name: "ApprovalCallerNotOwnerNorApproved", type: "error" },
@@ -393,11 +393,11 @@ const MIRA_CONTRACT_ABI = [
     inputs: [],
     name: "withdraw",
     outputs: [],
-    stateMutability: "payable",
+    stateMutability: "nonpayable",
     type: "function",
   },
   { stateMutability: "payable", type: "receive" },
-];
+]
 
 const TIDDLES_CONTRACT_ADDRESS = "0x2dCDd3D74b2C6538b723Bb7ACCfDEdC7fc6aB6E9";
 

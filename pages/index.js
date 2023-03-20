@@ -82,14 +82,14 @@ const Home = () => {
       // let network = "4"
       // console.log('switch', network, library)
 
-      await library.provider.request({
-        method: "wallet_switchEthereumChain",
-        params: [{ chainId: "5" }],
-      });
       // await library.provider.request({
       //   method: "wallet_switchEthereumChain",
-      //   params: [{ chainId: "0x1" }],
+      //   params: [{ chainId: "5" }],
       // });
+      await library.provider.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: "0x1" }],
+      });
       console.log("switch2", network);
       setNetwork(1);
     } catch (switchError) {
@@ -120,23 +120,23 @@ const Home = () => {
     const { chainId } = await web3Provider.getNetwork();
     setNetwork(chainId);
 
-    if (chainId != 5) {
-      //   window.alert("Incorrect network, please connect to goerli")
-      toast("Incorrect network, please connect to goerli", {
-        hideProgressBar: true,
-        autoClose: 2000,
-        type: "error",
-      });
-    }
-    // if (chainId != 1) {
-    //   //   window.alert("Incorrect network, please connect to goerli")
-    //   toast("Incorrect network, please connect to ethereum", {
+    // if (chainId != 5) {
+    
+    //   toast("Incorrect network, please connect to goerli", {
     //     hideProgressBar: true,
     //     autoClose: 2000,
     //     type: "error",
     //   });
-
     // }
+    if (chainId != 1) {
+      //   window.alert("Incorrect network, please connect to goerli")
+      toast("Incorrect network, please connect to ethereum", {
+        hideProgressBar: true,
+        autoClose: 2000,
+        type: "error",
+      });
+
+    }
 
     if (isSigner) {
       const signer = web3Provider.getSigner();
@@ -412,12 +412,12 @@ const Home = () => {
         </Grid>
         <Grid xs={12} style={{ width: "90%" }}>
           <p style={{ fontSize: "14px" }}>
-            {totalAmountMinted + 140} / {maxSupply} minted
+            {totalAmountMinted + 0} / {maxSupply} minted
           </p>
           <Grid xs={12}>
             <Progress
               percent={Math.floor(
-                ((totalAmountMinted + 140) * 100) / maxSupply
+                ((totalAmountMinted + 0) * 100) / maxSupply
               )}
             />
           </Grid>
@@ -425,9 +425,9 @@ const Home = () => {
         <Button
           variant="outlined"
           onClick={callMint}
-          disabled={totalAmountMinted + 140 === maxSupply}
+          disabled={totalAmountMinted + 0 === maxSupply}
         >
-          {totalAmountMinted + 140 === maxSupply ? "Sold Out" : "Mint"}
+          {totalAmountMinted + 0 === maxSupply ? "Sold Out" : "Mint"}
         </Button>
 
         <div style={{ fontSize: "16px" }}>
@@ -473,7 +473,7 @@ const Home = () => {
       <div>
         {walletConnected ? (
           <>
-            {network !== 5 ? (
+            {network !== 1 ? (
               <Button
                 variant="outlined"
                 onClick={switchNetwork}
@@ -538,7 +538,7 @@ const Home = () => {
             <p>
               {signedMessage ? (
                 <>
-                  {network !== 5 && (
+                  {network !== 1 && (
                     <Button
                       variant="outlined"
                       onClick={switchNetwork}
@@ -551,7 +551,7 @@ const Home = () => {
                 </>
               ) : (
                 <>
-                  {network !== 5 ? (
+                  {network !== 1 ? (
                     <Button
                       variant="outlined"
                       onClick={switchNetwork}
@@ -629,7 +629,7 @@ const Home = () => {
                           {!signedMessage && (
                             <>
                               {" "}
-                              {network !== 5 ? (
+                              {network !== 1 ? (
                                 <Button
                                   variant="outlined"
                                   onClick={switchNetwork}
@@ -651,7 +651,7 @@ const Home = () => {
                     </Grid>
                   ) : (
                     <>
-                      {totalAmountMinted + 140 >= maxSupply
+                      {totalAmountMinted + 0 >= maxSupply
                         ? renderSoldOut()
                         : "MINT HAS NOT STARTED"}
                     </>
@@ -663,7 +663,7 @@ const Home = () => {
                     <Grid>Loading...</Grid>
                   ) : (
                     <>
-                      {totalAmountMinted + 140 >= maxSupply ? (
+                      {totalAmountMinted + 0 >= maxSupply ? (
                         <>
                           {network !== 5 ? (
                             <>
